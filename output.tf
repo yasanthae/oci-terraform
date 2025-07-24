@@ -96,3 +96,33 @@ output "kubectl_config_cmd" {
     oci = var.cloud_provider == "oci" ? "oci ce cluster create-kubeconfig --cluster-id ${module.kubernetes.cluster_id} --file $HOME/.kube/config --region ${var.region}" : null
   }
 }
+
+################################################################################
+# OCI Additional Services Outputs
+################################################################################
+
+output "oci_block_volume_ids" {
+  description = "IDs of OCI block volumes"
+  value       = var.cloud_provider == "oci" && length(module.oci_services) > 0 ? module.oci_services[0].block_volume_ids : {}
+}
+
+output "oci_object_storage_buckets" {
+  description = "Names of OCI object storage buckets"
+  value       = var.cloud_provider == "oci" && length(module.oci_services) > 0 ? module.oci_services[0].object_storage_bucket_names : {}
+}
+
+output "oci_queue_endpoints" {
+  description = "Endpoints of OCI queues"
+  value       = var.cloud_provider == "oci" && length(module.oci_services) > 0 ? module.oci_services[0].queue_endpoints : {}
+}
+
+output "oci_virtual_machine_ips" {
+  description = "IP addresses of OCI virtual machines"
+  value       = var.cloud_provider == "oci" && length(module.oci_services) > 0 ? module.oci_services[0].virtual_machine_private_ips : {}
+}
+
+output "oci_database_connections" {
+  description = "Connection information for OCI databases"
+  value       = var.cloud_provider == "oci" && length(module.oci_services) > 0 ? module.oci_services[0].database_connection_strings : {}
+  sensitive   = true
+}

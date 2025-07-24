@@ -14,10 +14,10 @@ terraform {
       source  = "hashicorp/google"
       version = ">= 5.0"
     }
-    # oci = {
-    #   source  = "oracle/oci"
-    #   version = ">= 5.0"
-    # }
+    oci = {
+      source  = "oracle/oci"
+      version = ">= 5.0"
+    }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = ">= 2.0"
@@ -51,13 +51,14 @@ provider "google" {
   zone    = var.gcp_zone != "" ? var.gcp_zone : "us-central1-a"
 }
 
-# Oracle Cloud Provider - Temporarily commented out for GCP-only deployment
-# provider "oci" {
-#   # Use config file approach instead of direct parameters
-#   # This allows us to use a dummy config file when not deploying to OCI
-#   config_file_profile = "DEFAULT"
-#   config_file_path    = "C:\\temp\\dummy_oci_config"
-# }
+# Oracle Cloud Provider
+provider "oci" {
+  tenancy_ocid     = var.oci_tenancy_ocid
+  user_ocid        = var.oci_user_ocid
+  fingerprint      = var.oci_fingerprint
+  private_key_path = var.oci_private_key_path
+  region           = var.region
+}
 
 ################################################################################
 # Network Module
@@ -201,4 +202,33 @@ module "load_balancer" {
   
   tags = var.tags  
   depends_on = [module.kubernetes]
+}
+
+################################################################################
+# OCI Additional Services Module
+################################################################################
+
+module "oci_services" {
+  source = "./modules/oci-services"
+  count  = var.cloud_provider == "oci" ? 1 : 0
+  
+  compartment_id = var.oci_compartment_id
+  environment    = var.environment
+  project_name   = var.project_name
+  region         = var.region
+  
+  # Network Configuration
+  vcn_id    = module.network.vpc_id
+  subnet_id = length(module.network.private_subnet_ids) > 0 ? module.network.private_subnet_ids[0] : ""
+  
+  # Service Configurations
+  block_volumes         = var.oci_block_volumes
+  object_storage_buckets = var.oci_object_storage_buckets
+  queues               = var.oci_queues
+  virtual_machines     = var.oci_virtual_machines
+  database_systems     = var.oci_database_systems
+  
+  tags = var.tags
+  
+  depends_on = [module.network]
 }
